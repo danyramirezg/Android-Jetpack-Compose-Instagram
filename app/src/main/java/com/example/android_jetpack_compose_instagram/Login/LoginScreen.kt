@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,43 +46,50 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.android_jetpack_compose_instagram.Login.LoginViewModel
 import com.example.android_jetpack_compose_instagram.R
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(loginViewModel: LoginViewModel) {
     Box(
         Modifier
             .fillMaxSize()
             .padding(8.dp)
     ) {
         InstagramHeader(Modifier.align(Alignment.TopEnd))
-        InstagramBody(Modifier.align(Alignment.Center))
+        InstagramBody(Modifier.align(Alignment.Center), loginViewModel)
         footer(Modifier.align(Alignment.BottomCenter))
     }
 }
 
 @Composable
-fun InstagramBody(modifier: Modifier) {
-    var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    var isLoginEnable by rememberSaveable { mutableStateOf(true) }
+fun InstagramBody(modifier: Modifier, loginViewModel: LoginViewModel) {
+    // Without ViewModel:
+    // var email by rememberSaveable { mutableStateOf("") }
+    // var password by rememberSaveable { mutableStateOf("") }
+    // var isLoginEnable by rememberSaveable { mutableStateOf(true) }
+
+    val email: String by loginViewModel.email.observeAsState(initial = "")
+    val password: String by loginViewModel.password.observeAsState(initial = "")
+    val isEnable: Boolean by loginViewModel.isEnable.observeAsState(initial = false)
 
     Column(modifier = modifier) {
         InstagramLogo(modifier = Modifier.align(Alignment.CenterHorizontally))
         Spacer(modifier = Modifier.size(16.dp))
+
         InstagramEmail(email) {
-            email = it
-            isLoginEnable = enableLogin(email, password)
+           loginViewModel.onLoginChanged(email = it, password = password)
         }
         Spacer(modifier = Modifier.size(4.dp))
         InstagramPassword(password) {
-            password = it
-            isLoginEnable = enableLogin(email, password)
+            loginViewModel.onLoginChanged(email = email, password = it)
+        // password = it
+        // isLoginEnable = enableLogin(email, password)
         }
         Spacer(modifier = Modifier.size(8.dp))
         ForgotPasswordText(modifier = Modifier.align(Alignment.End))
         Spacer(modifier = Modifier.size(16.dp))
-        LoginButton(isLoginEnable)
+        LoginButton(isEnable)
         Spacer(modifier = Modifier.size(16.dp))
         LoginDivider()
         Spacer(modifier = Modifier.size(32.dp))
@@ -180,9 +188,6 @@ fun LoginButton(loginEnable: Boolean) {
     }
 }
 
-fun enableLogin(email: String, password: String) =
-    Patterns.EMAIL_ADDRESS.matcher(email).matches() && password.length > 6
-
 @Composable
 fun ForgotPasswordText(modifier: Modifier) {
     Text(
@@ -209,8 +214,6 @@ fun InstagramPassword(password: String, onTextChanged: (String) -> Unit) {
         singleLine = true,
         maxLines = 1,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-
-
         trailingIcon = {
             val image = if (passwordVisibility) {
                 Icons.Filled.KeyboardArrowLeft
