@@ -1,7 +1,6 @@
 package com.example.android_jetpack_compose_instagram.ui.theme
 
 import android.app.Activity
-import android.util.Patterns
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +20,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -33,7 +33,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,14 +50,25 @@ import com.example.android_jetpack_compose_instagram.R
 
 @Composable
 fun LoginScreen(loginViewModel: LoginViewModel) {
+    val isLoading: Boolean by loginViewModel.isLoading.observeAsState(initial = false)
     Box(
         Modifier
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        InstagramHeader(Modifier.align(Alignment.TopEnd))
-        InstagramBody(Modifier.align(Alignment.Center), loginViewModel)
-        footer(Modifier.align(Alignment.BottomCenter))
+        if (isLoading) {
+            Box(
+                Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            InstagramHeader(Modifier.align(Alignment.TopEnd))
+            InstagramBody(Modifier.align(Alignment.Center), loginViewModel)
+            footer(Modifier.align(Alignment.BottomCenter))
+        }
     }
 }
 
@@ -89,7 +99,7 @@ fun InstagramBody(modifier: Modifier, loginViewModel: LoginViewModel) {
         Spacer(modifier = Modifier.size(8.dp))
         ForgotPasswordText(modifier = Modifier.align(Alignment.End))
         Spacer(modifier = Modifier.size(16.dp))
-        LoginButton(isEnable)
+        LoginButton(isEnable, loginViewModel)
         Spacer(modifier = Modifier.size(16.dp))
         LoginDivider()
         Spacer(modifier = Modifier.size(32.dp))
@@ -174,9 +184,9 @@ fun DividerCustomized(modifier: Modifier) {
 }
 
 @Composable
-fun LoginButton(loginEnable: Boolean) {
+fun LoginButton(loginEnable: Boolean, loginViewModel: LoginViewModel) {
     Button(
-        onClick = { }, enabled = loginEnable, modifier = Modifier.fillMaxWidth(),
+        onClick = { loginViewModel.onLoginSelected() }, enabled = loginEnable, modifier = Modifier.fillMaxWidth(),
         colors = ButtonDefaults.buttonColors(
             //backgroundColor = Color(0xFF4EA8E9),
             //disableBackgroundColor = Color(0xFF78C8F9),
